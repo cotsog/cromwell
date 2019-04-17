@@ -104,7 +104,6 @@ final case class WorkflowStoreEngineActor private(store: WorkflowStore,
     def metadataKey(workflowId: WorkflowId, randomNumberString: String, key: String) =
       MetadataKey(workflowId = workflowId, jobKey = None, s"${WorkflowMetadataKeys.ProcessingEvent}[$randomNumberString]:$key")
 
-
     val work: Future[Any] = command match {
       case FetchRunnableWorkflows(count) =>
         newWorkflowMessage(count) map { response =>

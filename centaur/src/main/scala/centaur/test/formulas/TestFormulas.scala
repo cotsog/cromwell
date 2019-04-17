@@ -11,10 +11,9 @@ import centaur.test.{Operations, Test}
 import centaur.{CentaurConfig, CromwellManager, ManagedCromwellServer}
 import com.typesafe.config.ConfigFactory
 import cromwell.api.model.{Aborted, Aborting, Failed, Running, SubmittedWorkflow, Succeeded, TerminalStatus}
-
-import scala.concurrent.duration._
 import net.ceedubs.ficus.Ficus._
 
+import scala.concurrent.duration._
 import scala.language.postfixOps
 
 /**
@@ -33,12 +32,10 @@ object TestFormulas {
 
   private def runSuccessfulWorkflow(workflow: Workflow): Test[SubmittedWorkflow] = runWorkflowUntilTerminalStatus(workflow, Succeeded)
   private def runFailingWorkflow(workflow: Workflow): Test[SubmittedWorkflow] = runWorkflowUntilTerminalStatus(workflow, Failed)
-  import centaur.test.metadata.WorkflowFlatMetadata._
 
   def runSuccessfulWorkflowAndVerifyMetadata(workflowDefinition: Workflow): Test[SubmitResponse] = for {
     submittedWorkflow <- runSuccessfulWorkflow(workflowDefinition)
     metadata <- validateMetadata(submittedWorkflow, workflowDefinition)
-    cromwellId = metadata.asFlat.value.get("cromwellId") map { _.toString() }
     _ <- validateDirectoryContentsCounts(workflowDefinition, submittedWorkflow, metadata)
   } yield SubmitResponse(submittedWorkflow, metadata)
 
