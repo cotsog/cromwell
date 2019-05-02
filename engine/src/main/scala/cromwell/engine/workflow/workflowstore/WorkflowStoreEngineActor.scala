@@ -13,13 +13,12 @@ import cromwell.engine.workflow.workflowstore.SqlWorkflowStore.{WorkflowStoreAbo
 import cromwell.engine.workflow.workflowstore.WorkflowStoreActor._
 import cromwell.engine.workflow.workflowstore.WorkflowStoreEngineActor._
 import cromwell.services.instrumentation.CromwellInstrumentationScheduler
-import cromwell.services.metadata.MetadataService.PutMetadataAction
-import cromwell.services.metadata.{MetadataEvent, MetadataKey, MetadataValue}
+import cromwell.services.metadata.WorkflowProcessing
 import cromwell.util.GracefulShutdownHelper.ShutdownCommand
 import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Random, Success}
+import scala.util.{Failure, Success}
 
 final case class WorkflowStoreEngineActor private(store: WorkflowStore,
                                                   workflowStoreAccess: WorkflowStoreAccess,
@@ -99,11 +98,6 @@ final case class WorkflowStoreEngineActor private(store: WorkflowStore,
   }
 
   private def startNewWork(command: WorkflowStoreActorEngineCommand, sndr: ActorRef, nextData: WorkflowStoreActorData) = {
-    def randomNumberString: String = Random.nextInt.toString.stripPrefix("-")
-
-    def metadataKey(workflowId: WorkflowId, randomNumberString: String, key: String) =
-      MetadataKey(workflowId = workflowId, jobKey = None, s"${WorkflowMetadataKeys.ProcessingEvent}[$randomNumberString]:$key")
-
     val work: Future[Any] = command match {
       case FetchRunnableWorkflows(count) =>
         newWorkflowMessage(count) map { response =>
@@ -117,19 +111,10 @@ final case class WorkflowStoreEngineActor private(store: WorkflowStore,
                 workflowsIds.mkString(", ")
               )
 
-              val pickupMetadata: List[MetadataEvent] = workflowsIds flatMap { id =>
-                val random = randomNumberString
-
-                val processingFields = List(
-                  "description" -> WorkflowMetadataKeys.ProcessingEvents.Pickup,
-                  "cromwellId" -> workflowHeartbeatConfig.cromwellId
-                )
-
-                processingFields map { case (k, v) =>
-                  MetadataEvent(metadataKey(workflowId = id, randomNumberString = random, key = k), MetadataValue(v))
-                }
+              import WorkflowProcessing.Pickup
+              workflowsIds foreach { w =>
+                WorkflowProcessing.publishEvent(w, workflowHeartbeatConfig.cromwellId, Pickup, serviceRegistryActor)
               }
-              serviceRegistryActor ! PutMetadataAction(pickupMetadata)
 
             case NoNewWorkflowsToStart => log.debug("No workflows fetched by {}", workflowHeartbeatConfig.cromwellId)
             case _ => log.error("Unexpected response from newWorkflowMessage({}): {}", count, response)
