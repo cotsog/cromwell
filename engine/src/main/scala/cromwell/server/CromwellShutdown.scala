@@ -172,7 +172,7 @@ object CromwellShutdown extends GracefulStopSupport {
     coordinatedShutdown.addTask(CoordinatedShutdown.PhaseServiceRequestsDone, "publishMetadataForReleasedWorkflowStoreEntries") { () =>
       EngineServicesStore.engineDatabaseInterface.findWorkflows(cromwellId).map(ids =>
         ids foreach { id =>
-          WorkflowProcessing.publishEvent(WorkflowId.fromString(id), cromwellId, WorkflowProcessing.Released, serviceRegistryActor)
+          WorkflowProcessing.publishProcessingEvents(WorkflowId.fromString(id), cromwellId, WorkflowProcessing.Released, serviceRegistryActor)
         }
       ).as(Done)
     }

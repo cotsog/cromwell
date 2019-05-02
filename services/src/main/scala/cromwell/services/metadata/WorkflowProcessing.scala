@@ -22,7 +22,7 @@ object WorkflowProcessing {
   case object Released extends ProcessingMetadataKey
   case object Terminal extends ProcessingMetadataKey
 
-  def publishEvent(workflowId: WorkflowId, cromwellId: String, key: ProcessingMetadataKey, serviceRegistry: ActorRef): Unit = {
+  def publishProcessingEvents(workflowId: WorkflowId, cromwellId: String, key: ProcessingMetadataKey, serviceRegistry: ActorRef): Unit = {
     def randomNumberString: String = Random.nextInt.toString.stripPrefix("-")
 
     def metadataKey(workflowId: WorkflowId, randomNumberString: String, key: String) =

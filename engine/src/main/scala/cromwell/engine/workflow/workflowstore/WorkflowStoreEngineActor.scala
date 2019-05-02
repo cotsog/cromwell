@@ -111,9 +111,8 @@ final case class WorkflowStoreEngineActor private(store: WorkflowStore,
                 workflowsIds.mkString(", ")
               )
 
-              import WorkflowProcessing.PickedUp
               workflowsIds foreach { w =>
-                WorkflowProcessing.publishEvent(w, workflowHeartbeatConfig.cromwellId, PickedUp, serviceRegistryActor)
+                WorkflowProcessing.publishProcessingEvents(w, workflowHeartbeatConfig.cromwellId, WorkflowProcessing.PickedUp, serviceRegistryActor)
               }
 
             case NoNewWorkflowsToStart => log.debug("No workflows fetched by {}", workflowHeartbeatConfig.cromwellId)

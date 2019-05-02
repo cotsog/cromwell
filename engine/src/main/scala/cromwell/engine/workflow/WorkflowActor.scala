@@ -27,6 +27,8 @@ import cromwell.engine.workflow.lifecycle.materialization.MaterializeWorkflowDes
 import cromwell.engine.workflow.lifecycle.materialization.MaterializeWorkflowDescriptorActor.{MaterializeWorkflowDescriptorCommand, MaterializeWorkflowDescriptorFailureResponse, MaterializeWorkflowDescriptorSuccessResponse}
 import cromwell.engine.workflow.workflowstore.WorkflowStoreActor.WorkflowStoreWriteHeartbeatCommand
 import cromwell.engine.workflow.workflowstore.{RestartableAborting, StartableState, WorkflowHeartbeatConfig, WorkflowToStart}
+import cromwell.services.metadata.WorkflowProcessing
+import cromwell.services.metadata.WorkflowProcessing.Terminal
 import cromwell.subworkflowstore.SubWorkflowStoreActor.WorkflowComplete
 import cromwell.webservice.EngineStatsActor
 
@@ -410,6 +412,7 @@ class WorkflowActor(workflowToStart: WorkflowToStart,
       setWorkflowTimePerState(terminalState.workflowState, (System.currentTimeMillis() - startTime).millis)
       workflowLogger.debug(s"transition from {} to {}. Stopping self.", arg1 = oldState, arg2 = terminalState)
       pushWorkflowEnd(workflowId)
+      WorkflowProcessing.publishProcessingEvents(workflowId, workflowHeartbeatConfig.cromwellId, Terminal, serviceRegistryActor)
       subWorkflowStoreActor ! WorkflowComplete(workflowId)
       terminalState match {
         case WorkflowFailedState =>
