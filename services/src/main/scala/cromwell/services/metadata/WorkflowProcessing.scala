@@ -18,8 +18,8 @@ object WorkflowProcessing {
     def forPublication: String = Introspector.decapitalize(getClass.toString)
   }
 
-  case object Pickup extends ProcessingMetadataKey
-  case object Release extends ProcessingMetadataKey
+  case object PickedUp extends ProcessingMetadataKey
+  case object Released extends ProcessingMetadataKey
   case object Terminal extends ProcessingMetadataKey
 
   def publishEvent(workflowId: WorkflowId, cromwellId: String, key: ProcessingMetadataKey, serviceRegistry: ActorRef): Unit = {

@@ -11,9 +11,11 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import cats.instances.future._
 import cats.syntax.functor._
+import cromwell.core.WorkflowId
 import cromwell.engine.workflow.WorkflowManagerActor.{AbortAllWorkflowsCommand, PreventNewWorkflowsFromStarting}
 import cromwell.languages.util.ImportResolver.HttpResolver
-import cromwell.services.{MetadataServicesStore, EngineServicesStore}
+import cromwell.services.metadata.WorkflowProcessing
+import cromwell.services.{EngineServicesStore, MetadataServicesStore}
 import cromwell.util.GracefulShutdownHelper.ShutdownCommand
 import org.slf4j.LoggerFactory
 
@@ -133,6 +135,7 @@ object CromwellShutdown extends GracefulStopSupport {
 
     /* 3) Finish processing all requests:
       *  - Release any WorkflowStore entries held by this Cromwell instance.
+      *  - Publish workflow processing event metadata for the released workflows.
       *  - Stop the WorkflowStore: The port is not bound anymore so we can't have new submissions.
       *   Process what's left in the message queue and stop. 
       *   Note that it's possible that some submissions are still asynchronously being prepared at the 
@@ -166,6 +169,14 @@ object CromwellShutdown extends GracefulStopSupport {
         logger.info("{} workflows released by {}", count, cromwellId)
       }).as(Done)
     }
+    coordinatedShutdown.addTask(CoordinatedShutdown.PhaseServiceRequestsDone, "publishMetadataForReleasedWorkflowStoreEntries") { () =>
+      EngineServicesStore.engineDatabaseInterface.findWorkflows(cromwellId).map(ids =>
+        ids foreach { id =>
+          WorkflowProcessing.publishEvent(WorkflowId.fromString(id), cromwellId, WorkflowProcessing.Released, serviceRegistryActor)
+        }
+      ).as(Done)
+    }
+
     shutdownActor(workflowStoreActor, CoordinatedShutdown.PhaseServiceRequestsDone, ShutdownCommand)
     shutdownActor(logCopyRouter, CoordinatedShutdown.PhaseServiceRequestsDone, Broadcast(ShutdownCommand))
     shutdownActor(jobTokenDispenser, CoordinatedShutdown.PhaseServiceRequestsDone, ShutdownCommand)
