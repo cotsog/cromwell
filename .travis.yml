@@ -3,3 +3,6 @@ dist: trusty
 services: docker
 language: minimal
 script: ./testDockerScripts.sh
+
+notifications:
+  email: false
