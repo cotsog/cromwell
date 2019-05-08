@@ -10,8 +10,8 @@ for i in $(seq 20); do
     curl -iv https://raw.githubusercontent.com/drupal/drupal/8.7.0/index.php
     curl -iv https://raw.githubusercontent.com/drupal/drupal/8.7.0/sites/example.sites.php
     echo
-    echo "Sleeping 10 seconds..."
-    sleep 10
+    echo "Sleeping 5 seconds..."
+    sleep 5
 done
 
 for i in $(seq 20); do
@@ -23,6 +23,6 @@ for i in $(seq 20); do
         "curl -iv https://raw.githubusercontent.com/drupal/drupal/8.7.0/index.php;" \
         "curl -iv https://raw.githubusercontent.com/drupal/drupal/8.7.0/sites/example.sites.php"
     echo
-    echo "Sleeping 10 seconds..."
-    sleep 10
+    echo "Sleeping 5 seconds..."
+    sleep 5
 done
